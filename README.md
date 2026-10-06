@@ -90,3 +90,9 @@ When a venue or date round closes, tied highest-scoring choices are highlighted.
 
 
 If two or more venues tie for the highest nomination total, only those tied leaders enter the venue vote. Lower-ranked nominations are excluded. Otherwise the normal top-five shortlist applies.
+
+## Online hosting
+
+The online version uses Sites hosting with a D1 database. The guest page is public and anonymous; use **Organiser sign-in** to sign in with the ChatGPT account matching the configured organiser email. Every organiser API action is checked on the server. Reset and sample-vote controls are unchanged. Online polls start empty; local saved votes are never uploaded.
+
+Build the online version with `npm run build`. `node verify-online.mjs` checks the generated Worker against a real SQLite database, including concurrent submissions. Database migrations are generated with `npm run db:generate` and applied by Sites during publishing. ADMIN_EMAIL is stored as a private hosting setting, never in the browser or GitHub. GitHub contains the same source; GitHub Pages alone cannot host the vote backend.

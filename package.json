@@ -1,1 +1,16 @@
-{"name":"cardiff-christmas-vote","private":true,"scripts":{"start":"node server.mjs"},"type":"module"}
+{
+  "name": "cardiff-christmas-vote",
+  "private": true,
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node build-online.mjs",
+    "db:generate": "drizzle-kit generate",
+    "test": "node verify.mjs",
+    "test:online": "node build-online.mjs && node verify-online.mjs"
+  },
+  "type": "module",
+  "devDependencies": {
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2"
+  }
+}

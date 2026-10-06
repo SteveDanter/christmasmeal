@@ -1,1 +1,9 @@
 data/
+
+node_modules/
+dist/
+.sites-runtime/
+.env
+.env.*
+!.env.example
+*.tar.gz

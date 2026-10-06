@@ -1,0 +1,29 @@
+import {DatabaseSync} from 'node:sqlite';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import worker from './dist/server/index.js';
+const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync('drizzle/0000_friendly_gwen_stacy.sql','utf8'));
+const env={ADMIN_EMAIL:'owner@example.com',DB:{prepare(query){let values=[];return {bind(...args){values=args;return this;},async first(){return sql.prepare(query).get(...values);},async run(){const result=sql.prepare(query).run(...values);return {meta:{changes:result.changes}};}};}}};
+const origin='https://vote.example';
+const owner={'oai-authenticated-user-id':'owner-id','oai-authenticated-user-email':env.ADMIN_EMAIL};
+async function state(headers={}){return (await worker.fetch(new Request(origin+'/api/state',{headers}),env)).json();}
+async function post(path,body,headers={}){const p=await state();const response=await worker.fetch(new Request(origin+path,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...headers},body:JSON.stringify({...body,pollId:p.pollId,phase:p.phase,venueRound:p.venueRound,dateRound:p.dateRound})}),env);return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};}
+assert.equal((await state()).admin,false);assert.equal((await state(owner)).admin,true);
+assert.equal((await state({'oai-authenticated-user-id':'other','oai-authenticated-user-email':'other@example.com'})).admin,false);
+assert.equal((await post('/api/admin',{action:'load-demo',confirm:true})).status,403);
+const page=await worker.fetch(new Request(origin+'/'),env);assert.equal(page.status,200);const html=await page.text();new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);assert.ok(html.includes('/signin-with-chatgpt'));assert.ok(!html.includes(env.ADMIN_EMAIL));
+await post('/api/admin',{action:'load-demo',confirm:true},owner);assert.equal((await state()).nominationCount,10);
+let vote=await post('/api/vote',{venue:'Sample: City Steakhouse'});assert.equal(vote.status,200);
+assert.equal((await post('/api/vote',{venue:'Sample: Park Restaurant'},{Cookie:vote.cookie})).status,409);
+assert.equal((await state()).nominationCount,11);assert.equal((await state()).nominationTotals,null);
+await post('/api/admin',{action:'close-nominations'},owner);assert.equal((await post('/api/admin',{action:'open-shortlist',selected:[0,1]},owner)).status,200);
+assert.equal((await state()).venueCount,10);await post('/api/vote',{choices:[0]});await post('/api/admin',{action:'close-venue'},owner);
+await post('/api/admin',{action:'open-dates',selected:0,dates:['2026-12-04','2026-12-11','2026-12-18'],mode:'all'},owner);
+assert.equal((await state()).dateCount,10);assert.equal((await post('/api/vote',{choices:[0,1]})).status,200);await post('/api/admin',{action:'close-dates'},owner);assert.equal((await state()).phase,'closed');
+await post('/api/admin',{action:'reset',confirm:true},owner);await post('/api/admin',{action:'open-nominations'},owner);
+assert.equal((await post('/api/vote',{venue:'A'},{Cookie:vote.cookie})).status,200);
+const before=(await state()).nominationCount;
+const simultaneous=await Promise.all([post('/api/vote',{venue:'B'}),post('/api/vote',{venue:'C'})]);
+assert.equal(simultaneous.filter(r=>r.status===200).length,1);assert.equal(simultaneous.filter(r=>r.status===409).length,1);assert.equal((await state()).nominationCount,before+1);
+console.log('Online checks passed: guest/owner access, durable SQLite storage, complete demo flow, resets, cookies, concurrent vote protection, and frontend syntax.');
