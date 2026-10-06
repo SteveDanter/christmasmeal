@@ -17,6 +17,8 @@ handler=handler.replaceAll('save(', 'await save(');
 handler=handler.replace('res.end(JSON.stringify(data));','return res.end(JSON.stringify(data));');
 handler=handler.replace("\n reply(404,{error:'Page not found.'});","\n return reply(404,{error:'Page not found.'});");
 handler=handler.replace("crypto.createHash('sha256').update(state.salt+token).digest('hex')", "Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(state.salt+token))),b=>b.toString(16).padStart(2,'0')).join('')");
+handler=handler.replace("if(state.seen[round].includes(hash))", "const userId=request.headers.get('oai-authenticated-user-id');const userHash=userId?Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(state.salt+'signed-user:'+userId))),b=>b.toString(16).padStart(2,'0')).join(''):null;\n if(state.seen[round].includes(hash)||(userHash&&state.seen[round].includes(userHash)))");
+handler=handler.replace('next.seen[round].push(hash);','next.seen[round].push(hash);if(userHash)next.seen[round].push(userHash);');
 handler=handler.replace("Max-Age=31536000`", "Max-Age=31536000; Secure`");
 handler=handler.replace("Open localhost on the organiser’s laptop to manage this poll.","Sign in as the organiser to manage this poll.");
 handler=handler.replace("}catch(error){reply(500,{error:'Unable to save or load this request. Please try again.'});}","}catch(error){return reply(error.code===409?409:500,{error:error.code===409?'Another response arrived at the same time. Please try again.':'Unable to save or load this request. Please try again.'});}");

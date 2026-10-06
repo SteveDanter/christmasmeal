@@ -96,3 +96,7 @@ If two or more venues tie for the highest nomination total, only those tied lead
 The online version uses Sites hosting with a D1 database. The guest page is public and anonymous; use **Organiser sign-in** to sign in with the ChatGPT account matching the configured organiser email. Every organiser API action is checked on the server. Reset and sample-vote controls are unchanged. Online polls start empty; local saved votes are never uploaded.
 
 Build the online version with `npm run build`. `node verify-online.mjs` checks the generated Worker against a real SQLite database, including concurrent submissions. Database migrations are generated with `npm run db:generate` and applied by Sites during publishing. ADMIN_EMAIL is stored as a private hosting setting, never in the browser or GitHub. GitHub contains the same source; GitHub Pages alone cannot host the vote backend.
+
+## Repeat vote protection
+
+Each round and runoff accepts at most 11 responses, enforced in the database update path. A random browser receipt is saved locally and sent with submissions, so repeat protection does not rely only on cookie forwarding. Signed-in accounts are also checked using a salted hash of their user ID. Names and emails are not stored with ballots. Anonymous users using different browsers/devices can still bypass per-browser identification; the hard 11-response cap still applies. Resetting changes the poll salt and ID and allows everyone to vote again.

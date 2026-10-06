@@ -146,6 +146,8 @@ const server=http.createServer(async(req,res)=>{
  if(url.pathname==='/api/vote'){
 
  const round=state.phase;if(!['nomination','venue','date'].includes(round))return reply(409,{error:'Voting is currently closed.'});
+ const received=state[round==='nomination'?'nominationVotes':round+'Votes'].length;
+ if(received>=11)return reply(409,{error:'All 11 responses have been received. No further votes can be added to this round.'});
 
  const choices=body.choices;
 
@@ -159,7 +161,7 @@ const server=http.createServer(async(req,res)=>{
 
  const cookie=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);
 
- const token=cookie&&/^[a-f0-9]{64}$/.test(cookie)?cookie:crypto.randomBytes(32).toString('hex');
+ const token=typeof body.voterToken==='string'&&/^[a-f0-9]{64}$/.test(body.voterToken)?body.voterToken:cookie&&/^[a-f0-9]{64}$/.test(cookie)?cookie:crypto.randomBytes(32).toString('hex');
 
  const hash=crypto.createHash('sha256').update(state.salt+token).digest('hex');
 

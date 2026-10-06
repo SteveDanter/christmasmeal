@@ -26,7 +26,8 @@ const date=d=>new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'
 function message(text,error=false){$('message').textContent=text;$('message').className=error?'error':'';}
 
 
-async function post(url,body){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();if(!res.ok)throw Error(data.error);return data;}
+function voterToken(){const key='christmas-voter:'+poll.pollId;try{let token=localStorage.getItem(key);if(!token||!/^[a-f0-9]{64}$/.test(token)){token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem(key,token);}return token;}catch{throw Error('Please allow this site to remember your vote in your browser, then try again.');}}
+async function post(url,body){if(url==='/api/vote')body={...body,voterToken:voterToken()};const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();if(!res.ok)throw Error(data.error);return data;}
 
 
 function totals(labels,values,count,tied=[]){return labels.map((v,i)=>`<div class="result ${tied.includes(i)?'tied':''}"><div class="result-line"><span>${escape(v)}${tied.includes(i)?' <span class="tied-label">— Tied leader</span>':''}</span><strong>${values[i]} ${values[i]===1?'vote':'votes'}</strong></div><div class="bar"><span style="width:${count?values[i]/count*100:0}%"></span></div></div>`).join('');}
