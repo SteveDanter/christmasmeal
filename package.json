@@ -1,0 +1,1 @@
+{"name":"cardiff-christmas-vote","private":true,"scripts":{"start":"node server.mjs"},"type":"module"}

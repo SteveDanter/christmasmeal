@@ -1,0 +1,203 @@
+<!doctype html>
+
+
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cardiff Christmas meal · Team vote</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23194438'/%3E%3Cpath d='M16 4L5 23h8v5h6v-5h8z' fill='%23efc878'/%3E%3C/svg%3E"><style>
+
+
+:root{color-scheme:light;--green:#194438;--gold:#c19349;--ink:#213b33;--muted:#65716a;--paper:#f7f4ed}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,sans-serif}header{background:var(--green);color:white;padding:30px max(24px,calc((100vw - 1000px)/2));display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{font-weight:650;letter-spacing:.03em}.badge{font-size:14px;border:1px solid #7c9789;border-radius:30px;padding:5px 14px}main{max-width:1000px;margin:48px auto;padding:0 24px}.eyebrow{color:#826028;text-transform:uppercase;font-size:14px;letter-spacing:.15em;font-weight:700}h1{font:clamp(32px,5vw,48px)/1.2 Georgia,serif;margin:12px 0 18px}h2{font:28px/1.3 Georgia,serif;margin-top:0}h3{font-size:18px}.muted{color:var(--muted)}.steps{display:flex;gap:8px;margin:30px 0}.step{flex:1;padding:12px 15px;border-bottom:3px solid #d9ded7;color:var(--muted)}.step.active{border-color:var(--green);color:var(--green);font-weight:650}.layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:26px}.card{background:white;border:1px solid #e0e4db;border-radius:16px;padding:28px;box-shadow:0 5px 20px #19443805}.note{background:#ebeede;border-radius:16px;padding:24px;align-self:start}.choice{display:flex;align-items:center;gap:14px;border:1px solid #d8dfd6;border-radius:10px;padding:18px;margin:12px 0;cursor:pointer}.choice:has(input:checked){background:#edf3ed;border-color:var(--green)}input[type=radio],input[type=checkbox]{width:20px;height:20px;accent-color:var(--green);flex-shrink:0}button{font:600 16px system-ui;border:0;border-radius:8px;padding:14px 22px;background:var(--green);color:white;cursor:pointer;margin-top:16px}button:disabled{opacity:.55;cursor:wait}input[type=text],input[type=date],select{display:block;width:100%;padding:12px;font:16px system-ui;border:1px solid #bccabc;border-radius:8px;margin:6px 0 14px;background:white;color:var(--ink)}label{display:block}#message{margin:18px 0;color:var(--green);font-weight:600}#message.error{color:#a02f29}details{margin-top:30px;border-top:1px solid #d9ded7;padding-top:20px}summary{cursor:pointer;font-weight:650}.bar{height:10px;background:#edf0e8;border-radius:10px;overflow:hidden}.bar span{display:block;height:100%;background:var(--green)}.result{margin:20px 0}.result-line{display:flex;justify-content:space-between;gap:15px}footer{max-width:1000px;margin:35px auto;padding:0 24px;color:var(--muted);font-size:14px}a{color:var(--green)}:focus-visible{outline:3px solid var(--gold);outline-offset:4px}@media(max-width:700px){main{margin-top:30px}.layout{grid-template-columns:1fr}header{padding:22px 24px}.card{padding:22px}.step{padding:10px 4px;font-size:14px}.badge{white-space:nowrap}}
+
+
+.participation{background:#e7eee5;border:1px solid #c8d7c7;border-radius:12px;padding:20px 24px;margin:0 0 26px}.participation strong{display:block;font-size:22px}.participation p{margin:4px 0 12px}.participation progress{display:block;width:100%;height:12px;accent-color:var(--green)}.participation.complete{border-color:var(--green)}
+
+
+.result.tied{background:#fff2d6;border:2px solid #c19349;border-radius:10px;padding:14px}.tie-banner{background:#fff2d6;border-left:4px solid #c19349;padding:16px;margin:16px 0}.tied-label{color:#775315;font-weight:700}
+
+
+.announcement{position:relative;overflow:hidden;text-align:center;background:var(--green);color:#fff;padding:clamp(32px,6vw,70px) 24px;border:3px solid #c19349;border-radius:20px;margin-bottom:30px;box-shadow:0 12px 35px #19443820}.announcement[hidden]{display:none}.announcement .eyebrow{color:#efcf8d}.announcement h2{font:clamp(36px,7vw,70px)/1.15 Georgia,serif;margin:22px 0;overflow-wrap:anywhere}.announcement time{display:block;font-size:clamp(24px,4vw,38px);font-weight:700;line-height:1.3;color:#ffe4a8}.announcement .festive-stars{font-size:28px;color:#efcf8d;letter-spacing:.4em;margin-bottom:16px}.announcement p{margin:24px auto 0;max-width:540px}.finished main>h1,.finished main>.eyebrow,.finished main>p,.finished .steps{display:none}.finished .layout{grid-template-columns:1fr}.finished .note{display:none}.finished .participation{margin-bottom:20px}.finished .badge{border-color:#c19349;color:#ffe4a8}
+</style></head><body><header><div class="brand">✦ Cardiff Christmas meal</div><span class="badge">Anonymous team vote</span></header><main><section id="announcement" class="announcement" hidden aria-labelledby="announcement-venue" aria-live="polite"></section><div class="eyebrow">Christmas together</div><h1>Let’s get the meal in the diary.</h1><p class="muted">Suggest a favourite. Choose from the top five. Find a date that works.</p><div class="steps"><div id="step1" class="step">01 &nbsp; Nominate</div><div id="step2" class="step">02 &nbsp; Choose a venue</div><div id="step3" class="step">03 &nbsp; Pick a date</div></div><section id="participation" class="participation" aria-label="Round participation"><div id="participation-text" role="status" aria-live="polite"></div><progress id="participation-progress" max="11" value="0" aria-label="Responses received out of 11"></progress><span id="count-status" class="muted"></span></section><div class="layout"><section class="card"><div id="content">Loading the poll…</div><p id="message" role="status" aria-live="polite"></p></section><aside class="note"><h3>A little less email. A little more Christmas.</h3><p>No names or email addresses are requested.</p><p>Results are revealed when each round closes, so everyone can make their own choice.</p><p class="muted">Please vote once per round. This browser remembers your vote using a cookie.</p><div id="counts"></div></aside></div><div id="organiser"></div></main><footer>Cardiff Christmas meal · Organised by the team, chosen by the team.</footer><script>
+
+
+let poll;const $=id=>document.getElementById(id);const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+
+const date=d=>new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+
+function message(text,error=false){$('message').textContent=text;$('message').className=error?'error':'';}
+
+
+async function post(url,body){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();if(!res.ok)throw Error(data.error);return data;}
+
+
+function totals(labels,values,count,tied=[]){return labels.map((v,i)=>`<div class="result ${tied.includes(i)?'tied':''}"><div class="result-line"><span>${escape(v)}${tied.includes(i)?' <span class="tied-label">— Tied leader</span>':''}</span><strong>${values[i]} ${values[i]===1?'vote':'votes'}</strong></div><div class="bar"><span style="width:${count?values[i]/count*100:0}%"></span></div></div>`).join('');}
+
+
+async function load(){const res=await fetch('/api/state');if(!res.ok)throw Error('Unable to load the poll. Please refresh.');poll=await res.json();render();}
+
+
+function render(){const p=poll;const phase=p.phase;
+const final=phase==='closed'&&p.dateLeaders.length===1;
+document.body.classList.toggle('finished',final);
+$('announcement').hidden=!final;
+if(final){const winningDate=p.dates[p.dateLeaders[0]];$('announcement').innerHTML=`<div class="festive-stars" aria-hidden="true">&#10022; &#10022; &#10022;</div><div class="eyebrow">The votes are in. Here is our Christmas meal!</div><h2 id="announcement-venue">${escape(p.venues[p.selected])}</h2><time datetime="${escape(winningDate)}">${escape(date(winningDate))}</time><p>Put it in your diary! The organiser will confirm the booking and meal time.</p>${p.demo?'<p><strong>Demo result - sample votes included.</strong></p>':''}`;}
+$('step1').classList.toggle('active',['setup','nomination','nomination-closed'].includes(phase));$('step2').classList.toggle('active',['venue','venue-closed'].includes(phase));$('step3').classList.toggle('active',['date','date-tied','closed'].includes(phase));updateParticipation(p);
+
+
+if(phase==='setup')$('content').innerHTML='<h2>The table is still being set.</h2><p>The organiser will open nominations shortly. Have your favourite Cardiff venue in mind!</p>';
+
+
+if(phase==='nomination'){
+
+
+$('content').innerHTML=`<div class="eyebrow">Round one</div><h2>Where would you love to go?</h2><p class="muted">Suggest one favourite Cardiff venue. The five most nominated venues go through to the next vote.</p><form id="nominate"><label>Your favourite venue<input id="nominee" type="text" required maxlength="120" list="suggestions" placeholder="Type a venue name" autocomplete="off"></label><datalist id="suggestions">${p.nominees.map(v=>`<option value="${escape(v)}"></option>`).join('')}</datalist><p class="muted">If your venue has already been suggested, use its existing name so nominations count together.</p><button>Submit anonymous nomination</button></form>`;
+
+
+$('nominate').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;try{await post('/api/vote',{venue:$('nominee').value});await load();$('content').innerHTML='<h2>Thank you — your nomination is in.</h2><p>Come back when the shortlist vote opens.</p>';message('Nomination received.');}catch(err){message(err.message,true);}finally{btn.disabled=false;}};
+
+
+}
+
+
+if(phase==='nomination-closed')$('content').innerHTML=`<h2>Nominations are closed.</h2>${totals(p.nominees,p.nominationTotals,p.nominationCount,p.nominationTotals.filter(n=>n===Math.max(...p.nominationTotals)).length>1?p.nominationTotals.map((n,i)=>n===Math.max(...p.nominationTotals)?i:-1).filter(i=>i>=0):[])}<p class="muted">The organiser will open the shortlist vote next.</p>`;
+
+
+if(phase==='venue'||phase==='date'){const venue=phase==='venue';const choices=venue?p.venues:p.dates.map(date),runoff=p[venue?'venueRound':'dateRound']>1,options=p[venue?'venueOptions':'dateOptions'];$('content').innerHTML=`<div class="eyebrow">${runoff?'Runoff '+p[venue?'venueRound':'dateRound']:venue?'Round two':'Round three'}</div><h2>${venue?'Where shall we eat?':escape(p.venues[p.selected])}</h2><p class="muted">${runoff?'Choose one of the tied leaders. Everyone can vote again.':venue?`Choose your favourite of the ${p.venues.length} shortlisted venues.`:p.mode==='all'?'Tick every date you can attend.':'Choose your favourite date.'}</p><form id="ballot">${choices.map((v,i)=>options&&!options.includes(i)?'':`<label class="choice"><input type="${venue||p.mode==='one'||runoff?'radio':'checkbox'}" name="choice" value="${i}"><span>${escape(v)}</span></label>`).join('')}<button type="submit">Submit anonymous vote</button></form>`;$('ballot').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;try{await post('/api/vote',{choices:[...e.target.querySelectorAll('input:checked')].map(x=>Number(x.value))});await load();$('content').innerHTML='<h2>Thank you — your vote is in.</h2><p>Your choice has been saved. Results will be available when this round closes.</p>';message('Vote received.');}catch(err){message(err.message,true);}finally{btn.disabled=false;}};}
+
+
+if(phase==='venue-closed')$('content').innerHTML=`<h2>The venue vote is closed.</h2>${totals(p.venues,p.venueTotals,p.venueCount,p.venueLeaders.length>1?p.venueLeaders:[])}<p class="muted">The organiser will check dates with the winning venue against our work rota, then open three date choices.</p>`;
+
+
+if(phase==='closed'||phase==='date-tied')$('content').innerHTML=`<div class="eyebrow">${phase==='date-tied'?'Date vote tied':'Voting complete'}</div><h2>${escape(p.venues[p.selected])}</h2><p>Date availability from ${p.dateCount} ${p.dateCount===1?'colleague':'colleagues'}.</p>${totals(p.dates.map(date),p.dateTotals,p.dateCount,p.dateLeaders.length>1?p.dateLeaders:[])}<p class="muted">${phase==='date-tied'?'The tied dates need a runoff vote before a winner is confirmed.':'Winning date: '+escape(date(p.dates[p.dateLeaders[0]]))+'. The organiser will confirm the booking.'}</p>`;
+
+
+if((phase==='venue-closed'&&p.venueLeaders.length>1)||phase==='date-tied')$('content').innerHTML+='<div class="tie-banner"><strong>There is a tie - another vote is needed.</strong><p>The highlighted choices go through to a runoff. The organiser will open it for everyone to vote again.</p></div>';
+
+
+$('organiser').innerHTML=p.admin?'<details '+(phase==='setup'?'open':'')+'><summary>Organiser controls · this laptop only</summary><div class="card" style="margin-top:20px" id="admin"></div><div class="card" style="margin-top:16px"><h3>Start again</h3><p>Reset clears all nominations, votes and dates.</p><button id="reset" style="background:#a02f29">Reset poll</button> <button id="demo">Load 10 sample responses</button></div></details>':'';
+
+
+if(!p.admin)return;const admin=$('admin');
+
+
+$('reset').onclick=()=>{if(confirm('Reset the entire poll? All nominations, votes and dates will be cleared. This cannot be undone.'))act({action:'reset',confirm:true});};
+
+
+$('demo').onclick=()=>{if(confirm('Replace the current poll with a demo containing 10 sample nominations? Later rounds will also start with 10 sample votes, ready for your 11th response.'))act({action:'load-demo',confirm:true});};
+
+
+if(phase==='setup'){admin.innerHTML='<h2>Start with everyone’s suggestions</h2><p>Each colleague nominates one favourite venue. You can close nominations when everyone has had a chance to respond.</p><button id="start">Open nominations</button>';$('start').onclick=()=>act({action:'open-nominations'});}
+
+
+if(phase==='nomination'){admin.innerHTML='<p>Close nominations to see the totals and prepare the top five. Closing is final.</p><button id="close">Close nominations & reveal totals</button>';$('close').onclick=()=>{if(confirm('Close nominations? No more suggestions will be accepted.'))act({action:'close-nominations'});};}
+
+
+if(phase==='nomination-closed'){
+
+
+const ranked=p.nominees.map((v,i)=>({v,i,n:p.nominationTotals[i]})).sort((a,b)=>b.n-a.n||a.v.localeCompare(b.v));const limit=Math.min(5,ranked.length),cutoff=ranked[limit-1].n;
+const top=ranked.filter(v=>v.n===ranked[0].n);
+if(top.length>1){admin.innerHTML=`<h2>Vote between the tied leaders</h2><p>These ${top.length} venues share the highest nomination total. Only these venues will appear in the next vote.</p>${top.map(v=>`<div class="result tied">${escape(v.v)} · ${v.n} nominations <span class="tied-label">— Tied leader</span></div>`).join('')}<button id="nomination-runoff">Open vote between tied venues</button>`;$('nomination-runoff').onclick=()=>act({action:'open-shortlist',selected:top.map(v=>v.i)});}
+else {
+
+
+admin.innerHTML=`<h2>Open the top ${limit} venue vote</h2><p>The most nominated venues are selected below. ${ranked.length<5?'Fewer than five different venues were nominated, so all are included.':'If venues tie at the cutoff, choose which tied venues go through.'}</p><form id="shortlist">${ranked.map((v,i)=>`<label class="choice"><input type="checkbox" name="shortlist" value="${v.i}" ${i<limit?'checked':''} ${v.n!==cutoff?'disabled':''}><span>${escape(v.v)} · ${v.n} nominations</span></label>`).join('')}<button>Open shortlist vote</button></form>`;
+
+
+$('shortlist').onsubmit=e=>{e.preventDefault();act({action:'open-shortlist',selected:[...e.target.querySelectorAll('input:checked')].map(x=>Number(x.value))});};
+
+
+}
+
+
+}
+if(phase==='venue'){admin.innerHTML='<p>Close this round when everyone has had a chance to vote. Closing is final.</p><button id="close">Close venue vote & reveal results</button>';$('close').onclick=()=>{if(confirm('Close the venue vote? No more venue votes will be accepted.'))act({action:'close-venue'});};}
+
+
+if(phase==='venue-closed'&&p.venueLeaders.length===1){admin.innerHTML=`<h2>Confirm the winner and offer three dates</h2><p>Contact the winning venue and check availability against the work rota. Enter three suitable dates when you are ready. If venues tie, agree the winner first.</p><form id="dates"><label>Winning venue<select id="selected">${p.venues.map((v,i)=>`<option value="${i}" ${i!==p.venueLeaders[0]?'disabled':''}>${escape(v)} — ${p.venueTotals[i]} votes</option>`).join('')}</select></label>${[1,2,3].map(i=>`<label>Date ${i}<input type="date" required name="date"></label>`).join('')}<label>How colleagues choose<select id="mode"><option value="all">Every date they can attend</option><option value="one">One favourite date</option></select></label><button>Open date vote</button></form>`;$('selected').value=p.venueLeaders[0];$('dates').onsubmit=e=>{e.preventDefault();act({action:'open-dates',selected:Number($('selected').value),dates:[...e.target.querySelectorAll('input')].map(x=>x.value),mode:$('mode').value});};}
+
+
+if(phase==='date'){admin.innerHTML='<p>Close this round to reveal date totals. Closing is final.</p><button id="close">Close date vote & reveal results</button>';$('close').onclick=()=>{if(confirm('Close the date vote? No more date votes will be accepted.'))act({action:'close-dates'});};}
+
+
+if((phase==='venue-closed'&&p.venueLeaders.length>1)||phase==='date-tied'){admin.innerHTML='<h2>A runoff vote is required</h2><p>Only the highlighted tied leaders will appear. Each colleague chooses one; the count starts again for this runoff.</p><button id="runoff">Open runoff vote</button>';$('runoff').onclick=()=>act({action:'open-runoff'});}
+
+
+if(phase==='closed')admin.innerHTML='<p>All three rounds are complete. Use the date totals to confirm the meal with the venue.</p>';
+
+
+}
+
+
+async function act(body){try{await post('/api/admin',body);await load();message('Poll updated.');}catch(err){message(err.message,true);}}
+
+
+const expectedParticipants=11;
+
+
+function updateParticipation(p){
+
+
+ const round=['setup','nomination','nomination-closed'].includes(p.phase)?'nomination':['venue','venue-closed'].includes(p.phase)?'venue':'date';
+
+
+ const count=p[round+'Count'];
+
+
+ const label=(round==='nomination'?'Venue nominations':round==='venue'?'Venue vote':'Date vote')+(p[round+'Round']>1?' · Runoff '+p[round+'Round']:'');
+
+
+ let status=count===expectedParticipants?'All 11 responses received — the organiser can close this round.':count>expectedParticipants?'More than 11 responses received — the organiser should check before closing.':p.phase==='setup'?'Nominations have not opened yet.':`${expectedParticipants-count} ${expectedParticipants-count===1?'response':'responses'} still to come.`;
+
+
+ if(['nomination-closed','venue-closed','date-tied','closed'].includes(p.phase)&&count<=expectedParticipants)status=count===expectedParticipants?'Round closed — all 11 responses received.':'Round closed before all 11 responses were received.';
+
+
+ $('participation-text').innerHTML=`${p.demo?'<div class="eyebrow">Demo · includes 10 fictional responses per round</div>':''}<strong>${label}: ${count} of 11 ${round==='nomination'?'people have nominated':'people have voted'}</strong><p>${status}</p>`;
+
+
+ $('participation-progress').value=Math.min(count,expectedParticipants);
+
+
+ $('participation').classList.toggle('complete',count===expectedParticipants);
+
+
+ $('counts').textContent=`Nominations: ${p.nominationCount}/11 · Venue vote: ${p.venueCount}/11 · Date vote: ${p.dateCount}/11`;
+
+
+}
+
+
+async function refreshParticipation(){
+
+
+ if(document.hidden||!poll)return;
+
+
+ try{const res=await fetch('/api/state');if(!res.ok)throw Error();const current=await res.json();
+
+
+ if(current.phase==='closed'&&current.dateLeaders.length===1&&current.pollId===poll.pollId&&poll.phase!=='closed'){poll=current;render();$('count-status').textContent='Final result announced.';}
+ else if(current.phase===poll.phase&&current.pollId===poll.pollId&&current.venueRound===poll.venueRound&&current.dateRound===poll.dateRound){updateParticipation(current);$('count-status').textContent='Totals update automatically every 10 seconds.';}
+
+
+ else{$('count-status').innerHTML='The organiser has changed the round. <a href="/">Refresh to continue</a>.';}
+
+
+ }catch{$('count-status').textContent='Live count unavailable. Retrying shortly; the total above may be out of date.';}
+
+
+}
+
+
+load().then(()=>{$('count-status').textContent='Totals update automatically every 10 seconds.';}).catch(err=>message(err.message,true));
+
+
+setInterval(refreshParticipation,10000);
+
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshParticipation();});
+
+
+</script></body></html>
+
+
