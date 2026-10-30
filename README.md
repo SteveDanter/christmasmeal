@@ -1,4 +1,4 @@
-# Cardiff Christmas meal vote
+# D Shift Christmas Meal vote
 
 Anonymous venue and date voting, with a manual venue list and an editable participant count (12 by default).
 
