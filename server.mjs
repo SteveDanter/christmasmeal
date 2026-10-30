@@ -16,7 +16,7 @@ const dir=path.join(root,'data'); fs.mkdirSync(dir,{recursive:true});
 
 const file=path.join(dir,'poll.json');
 
-function freshPoll(){return {phase:'setup',participantCount:12,attendance:[],venues:[],dates:[],selected:null,mode:'all',venueVotes:[],dateVotes:[],nominees:[],nominationVotes:[],seen:{venue:[],date:[],nomination:[]},salt:crypto.randomBytes(32).toString('hex'),pollId:crypto.randomUUID(),demo:false,venueRound:1,dateRound:1,venueOptions:null,dateOptions:null,history:[]};}
+function freshPoll(){return {phase:'setup',participantCount:12,venuePointBudget:3,attendance:[],venues:[],dates:[],selected:null,mode:'all',venueVotes:[],dateVotes:[],nominees:[],nominationVotes:[],seen:{venue:[],date:[],nomination:[]},salt:crypto.randomBytes(32).toString('hex'),pollId:crypto.randomUUID(),demo:false,venueRound:1,dateRound:1,venueOptions:null,dateOptions:null,history:[]};}
 
 let state=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):freshPoll();
 
@@ -28,9 +28,11 @@ state.nominees??=[];state.nominationVotes??=[];state.seen.nomination??=[];
 
 function save(next){fs.writeFileSync(file+'.tmp',JSON.stringify(next,null,2));fs.renameSync(file+'.tmp',file);state=next;}
 
-function leaders(round){const labels=round==='venue'?state.venues:state.dates,votes=state[round+'Votes'],options=state[round+'Options']??labels.map((_,i)=>i),counts=labels.map((_,i)=>round==='venue'?votes.filter(v=>v===i).length:votes.filter(v=>v.includes(i)).length),max=Math.max(...options.map(i=>counts[i]));return options.filter(i=>counts[i]===max);}
+function leaders(round){const labels=round==='venue'?state.venues:state.dates,votes=state[round+'Votes'],options=state[round+'Options']??labels.map((_,i)=>i),counts=labels.map((_,i)=>round==='venue'?venuePoints(i):votes.filter(v=>v.includes(i)).length),max=Math.max(...options.map(i=>counts[i]));return options.filter(i=>counts[i]===max);}
 
-function publicState(){const {phase,venues,dates,selected,mode,nominees,pollId,demo,venueRound,dateRound,venueOptions,dateOptions}=state; const results=phase==='venue-closed'||phase==='date'||phase==='closed';return {participantCount:state.participantCount??12,attendanceCount:state.attendance?.length??0,attendingCount:(state.attendance??[]).filter(v=>v.answer==='yes').length,declinedCount:(state.attendance??[]).filter(v=>v.answer==='no').length,votingTarget:(state.participantCount??12)-(state.attendance??[]).filter(v=>v.answer==='no').length,phase,venues,dates,selected,mode,nominees,pollId,demo,venueRound,dateRound,venueOptions,dateOptions,venueLeaders:phase==='venue-closed'?leaders('venue'):[],dateLeaders:['date-tied','closed'].includes(phase)?leaders('date'):[],nominationCount:state.nominationVotes.length,nominationTotals:phase==='nomination-closed'?nominees.map((_,i)=>state.nominationVotes.filter(v=>v===i).length):null,venueCount:state.venueVotes.length,dateCount:state.dateVotes.length,venueTotals:results?venues.map((_,i)=>state.venueVotes.filter(v=>v===i).length):null,dateTotals:['date-tied','closed'].includes(phase)?dates.map((_,i)=>state.dateVotes.filter(v=>v.includes(i)).length):null};}
+function venuePoints(i){return state.venueVotes.reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(x=>x===i).length:Number(v===i)),0);}
+function venueBudget(){return state.venuePointBudget??(state.venueVotes.length?1:3);}
+function publicState(){const {phase,venues,dates,selected,mode,nominees,pollId,demo,venueRound,dateRound,venueOptions,dateOptions}=state; const results=phase==='venue-closed'||phase==='date'||phase==='closed';return {venuePointBudget:venueBudget(),venuePointsCast:state.venueVotes.reduce((sum,v)=>sum+(Array.isArray(v)?v.length:1),0),participantCount:state.participantCount??12,attendanceCount:state.attendance?.length??0,attendingCount:(state.attendance??[]).filter(v=>v.answer==='yes').length,declinedCount:(state.attendance??[]).filter(v=>v.answer==='no').length,votingTarget:(state.participantCount??12)-(state.attendance??[]).filter(v=>v.answer==='no').length,phase,venues,dates,selected,mode,nominees,pollId,demo,venueRound,dateRound,venueOptions,dateOptions,venueLeaders:phase==='venue-closed'?leaders('venue'):[],dateLeaders:['date-tied','closed'].includes(phase)?leaders('date'):[],nominationCount:state.nominationVotes.length,nominationTotals:phase==='nomination-closed'?nominees.map((_,i)=>state.nominationVotes.filter(v=>v===i).length):null,venueCount:state.venueVotes.length,dateCount:state.dateVotes.length,venueTotals:results?venues.map((_,i)=>venuePoints(i)):null,dateTotals:['date-tied','closed'].includes(phase)?dates.map((_,i)=>state.dateVotes.filter(v=>v.includes(i)).length):null};}
 
 const server=http.createServer(async(req,res)=>{
 
@@ -74,7 +76,7 @@ const server=http.createServer(async(req,res)=>{
 
  replacement.demo=true;replacement.phase='venue';
  replacement.venues=['Sample: Riverside Bistro','Sample: City Steakhouse','Sample: Bay Italian','Sample: Festive Pub','Sample: Central Brasserie'];
- replacement.venueVotes=[0,0,0,0,1,1,2,2,3,4].slice(0,Math.min(10,replacement.participantCount-1));
+ replacement.venueVotes=[0,0,0,0,1,1,2,2,3,4].slice(0,Math.min(10,replacement.participantCount-1)).map(i=>[i,i,i]);
 
  }
 
@@ -94,7 +96,7 @@ const server=http.createServer(async(req,res)=>{
  const venues=body.venues,count=body.participantCount;
  if(!Number.isInteger(count)||count<1||count>100)return reply(400,{error:'Enter a participant count between 1 and 100.'});
  if(!Array.isArray(venues)||venues.length<2||venues.length>20||venues.some(v=>typeof v!=='string'||!v.trim()||v.trim().length>120)||new Set(venues.map(v=>v.trim().replace(/\s+/g,' ').toLowerCase())).size!==venues.length)return reply(400,{error:'Enter 2 to 20 different venue names, one per line (up to 120 characters each).'});
- next.venues=venues.map(v=>v.trim().replace(/\s+/g,' '));next.participantCount=count;next.phase='venue';next.venueOptions=null;next.demo=false;save(next);return reply(200,publicState());
+ next.venuePointBudget=3;next.venues=venues.map(v=>v.trim().replace(/\s+/g,' '));next.participantCount=count;next.phase='venue';next.venueOptions=null;next.demo=false;save(next);return reply(200,publicState());
  }
  if(body.action==='open-runoff'){
 
@@ -104,9 +106,10 @@ const server=http.createServer(async(req,res)=>{
 
  next.history.push({round,number:state[round+'Round'],votes:state[round+'Votes'],options:state[round+'Options']});
 
+ if(round==='venue')next.venuePointBudget=3;
  next[round+'Options']=leaders(round);next[round+'Round']++;next[round+'Votes']=[];next.seen[round]=[];next.phase=round;
 
- if(next.demo){for(let i=0;i<Math.min(10,(state.participantCount??12)-1);i++){const choice=next[round+'Options'][i%next[round+'Options'].length];next[round+'Votes'].push(round==='venue'?choice:[choice]);}}
+ if(next.demo){for(let i=0;i<Math.min(10,(state.participantCount??12)-1);i++){const choice=next[round+'Options'][i%next[round+'Options'].length];next[round+'Votes'].push(round==='venue'?[choice,choice,choice]:[choice]);}}
 
  save(next);return reply(200,publicState());
 
@@ -137,7 +140,7 @@ const server=http.createServer(async(req,res)=>{
  }
  next.venues=selected.map(i=>state.nominees[i]);next.phase='venue';
 
- if(next.demo)next.venueVotes=[0,0,0,0,1,1,2,2,3,4].slice(0,Math.min(10,(state.participantCount??12)-1)).map(i=>i%next.venues.length);
+ if(next.demo)next.venueVotes=[0,0,0,0,1,1,2,2,3,4].slice(0,Math.min(10,(state.participantCount??12)-1)).map(i=>[i%next.venues.length,i%next.venues.length,i%next.venues.length]);next.venuePointBudget=3;
 
  }else if(body.action==='close-venue'&&state.phase==='venue'){next.phase='venue-closed';}
 
@@ -145,7 +148,7 @@ const server=http.createServer(async(req,res)=>{
 
  if(leaders('venue').length!==1)return reply(409,{error:'A venue runoff is required before opening the date vote.'});
 
- const counts=state.venues.map((_,i)=>state.venueVotes.filter(v=>v===i).length);
+ const counts=state.venues.map((_,i)=>venuePoints(i));
 
  if(!Number.isInteger(body.selected)||body.selected<0||body.selected>=state.venues.length||body.selected!==leaders('venue')[0]||!Array.isArray(body.dates)||body.dates.length!==3||new Set(body.dates).size!==3||body.dates.some(d=>typeof d!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d)||!Number.isFinite(Date.parse(d))||new Date(d).toISOString().slice(0,10)!==d)||!['all','one'].includes(body.mode))return reply(400,{error:'Choose the highest voted venue (or one of the tied winners) and three different valid dates.'});
 
@@ -193,13 +196,14 @@ const server=http.createServer(async(req,res)=>{
  const choices=body.choices;
  if(round==='nomination'){
  if(typeof body.venue!=='string'||!body.venue.trim()||body.venue.length>120)return reply(400,{error:'Enter your favourite venue (up to 120 characters).'});
- }else if(!Array.isArray(choices)||!choices.length||new Set(choices).size!==choices.length||choices.some(i=>!Number.isInteger(i)||i<0||i>=(round==='venue'?state.venues.length:3))||((round==='venue'||state.mode==='one'||state.dateRound>1)&&choices.length!==1)||choices.some(i=>state[round+'Options']&&!state[round+'Options'].includes(i)))return reply(400,{error:'Please select the available choices for this round.'});
+ }else if(!Array.isArray(choices)||!choices.length||choices.some(i=>!Number.isInteger(i)||i<0||i>=(round==='venue'?state.venues.length:3))||(round==='venue'?choices.length!==venueBudget():new Set(choices).size!==choices.length||((state.mode==='one'||state.dateRound>1)&&choices.length!==1))||choices.some(i=>state[round+'Options']&&!state[round+'Options'].includes(i)))return reply(400,{error:round==='venue'?`Allocate exactly ${venueBudget()} points between the available venues.`:'Please select the available choices for this round.'});
+
  if(state.seen[round].includes(hash))return reply(409,{error:'This browser has already voted in this round.'});
  next.seen[round].push(hash);
  if(round==='nomination'){
  const name=body.venue.trim().replace(/\s+/g,' '),key=s=>s.toLocaleLowerCase('en-GB').replace(/[^\p{L}\p{N}]/gu,'');
  let index=next.nominees.findIndex(v=>key(v)===key(name));if(index<0){index=next.nominees.length;next.nominees.push(name);}next.nominationVotes.push(index);
- }else if(round==='venue')next.venueVotes.push(choices[0]);else next.dateVotes.push(choices);
+ }else if(round==='venue')next.venueVotes.push([...choices]);else next.dateVotes.push(choices);
  save(next);res.setHeader('Set-Cookie',`${cookieName}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000`);return reply(200,{ok:true});
  }
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 export async function verifyFlow({state,post}){
  const admin=(body)=>post('/api/admin',body,true);
- const vote=async(choices,i)=>{const voterToken=i.toString(16).padStart(64,'0');const attendance=await post('/api/attendance',{answer:'yes',voterToken});if(attendance.status!==200)return attendance;return post('/api/vote',{choices,voterToken});};
+ const vote=async(choices,i)=>{const voterToken=i.toString(16).padStart(64,'0');const attendance=await post('/api/attendance',{answer:'yes',voterToken});if(attendance.status!==200)return attendance;const current=await state();if(current.phase==='venue'&&current.venuePointBudget===3&&choices.length===1)choices=[choices[0],choices[0],choices[0]];return post('/api/vote',{choices,voterToken});};
  assert.equal((await state()).participantCount,12);
  assert.equal((await admin({action:'set-participants',participantCount:0})).status,400);
  assert.equal((await admin({action:'set-participants',participantCount:1.5})).status,400);
@@ -56,7 +56,7 @@ export async function verifyFlow({state,post}){
  assert.equal((await state()).attendanceCount,1);assert.equal((await state()).declinedCount,1);assert.equal((await state()).votingTarget,11);
  assert.equal((await post('/api/vote',{choices:[0],voterToken:noToken})).status,403);
  assert.equal((await post('/api/attendance',{answer:'yes',voterToken:noToken})).status,200);assert.equal((await state()).votingTarget,12);
- await post('/api/attendance',{answer:'yes',voterToken:yesToken});await post('/api/vote',{choices:[0],voterToken:yesToken});
+ await post('/api/attendance',{answer:'yes',voterToken:yesToken});await post('/api/vote',{choices:[0,0,0],voterToken:yesToken});
  assert.equal((await post('/api/attendance',{answer:'no',voterToken:yesToken})).status,409);
  await admin({action:'reset',confirm:true});assert.equal((await state()).attendanceCount,0);
  console.log('Verified attendance gating and declines; manual venues; 12-to-15 participant changes; lower counts; limits; repeats; venue/date runoffs; resets; and demos.');

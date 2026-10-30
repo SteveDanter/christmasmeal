@@ -38,3 +38,7 @@ GitHub holds the same source. GitHub Pages alone cannot run this backend. `npm r
 ## Checks
 
 `npm test` checks the local server using a temporary isolated poll. `npm run test:online` checks the built Worker against a real SQLite database. Both cover manual venues, changing participant counts, response limits, repeats, tie runoffs, resets and sample votes. The online checks also cover organiser access, concurrent writes, and legacy data.
+
+## Three-point venue ballots
+
+New venue rounds give each attendee exactly three points, allocated as 3 to one venue, 2+1, or 1+1+1. Every submission is one person regardless of its split; results show total points. Venue runoffs also give three points, restricted to tied leaders. Date voting is unchanged. Existing rounds that already contain legacy single-choice ballots keep the original one-vote rule to avoid mixing voting systems; reset for a fresh three-point poll. Old saved ballots and results are preserved.
