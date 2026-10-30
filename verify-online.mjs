@@ -1,3 +1,4 @@
+import {verifyFlow} from './verify-flow.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
@@ -8,31 +9,21 @@ const env={ADMIN_EMAIL:'owner@example.com',DB:{prepare(query){let values=[];retu
 const origin='https://vote.example';
 const owner={'oai-authenticated-user-id':'owner-id','oai-authenticated-user-email':env.ADMIN_EMAIL};
 async function state(headers={}){return (await worker.fetch(new Request(origin+'/api/state',{headers}),env)).json();}
-async function post(path,body,headers={}){const p=await state();const response=await worker.fetch(new Request(origin+path,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...headers},body:JSON.stringify({...body,pollId:p.pollId,phase:p.phase,venueRound:p.venueRound,dateRound:p.dateRound})}),env);return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};}
+async function post(path,body,admin=false,headers={}){const p=await state();const response=await worker.fetch(new Request(origin+path,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...(admin?owner:{}),...headers},body:JSON.stringify({...body,pollId:p.pollId,phase:p.phase,venueRound:p.venueRound,dateRound:p.dateRound})}),env);return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};}
+
 assert.equal((await state()).admin,false);assert.equal((await state(owner)).admin,true);
-assert.equal((await state({'oai-authenticated-user-id':'other','oai-authenticated-user-email':'other@example.com'})).admin,false);
-assert.equal((await post('/api/admin',{action:'load-demo',confirm:true})).status,403);
-const page=await worker.fetch(new Request(origin+'/'),env);assert.equal(page.status,200);const html=await page.text();new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);assert.ok(html.includes('/signin-with-chatgpt'));assert.ok(!html.includes(env.ADMIN_EMAIL));
-await post('/api/admin',{action:'load-demo',confirm:true},owner);assert.equal((await state()).nominationCount,10);
-let vote=await post('/api/vote',{venue:'Sample: City Steakhouse'});assert.equal(vote.status,200);
-assert.equal((await post('/api/vote',{venue:'Sample: Park Restaurant'},{Cookie:vote.cookie})).status,409);
-assert.equal((await state()).nominationCount,11);assert.equal((await post('/api/vote',{venue:'Another venue',voterToken:'f'.repeat(64)},owner)).status,409);assert.equal((await state()).nominationTotals,null);
-await post('/api/admin',{action:'close-nominations'},owner);assert.equal((await post('/api/admin',{action:'open-shortlist',selected:[0,1]},owner)).status,200);
-assert.equal((await state()).venueCount,10);await post('/api/vote',{choices:[0]});assert.equal((await post('/api/vote',{choices:[1],voterToken:'e'.repeat(64)})).status,409);assert.equal((await state()).venueCount,11);await post('/api/admin',{action:'close-venue'},owner);
-await post('/api/admin',{action:'open-dates',selected:0,dates:['2026-12-04','2026-12-11','2026-12-18'],mode:'all'},owner);
-assert.equal((await state()).dateCount,10);assert.equal((await post('/api/vote',{choices:[0,1]})).status,200);assert.equal((await post('/api/vote',{choices:[2],voterToken:'d'.repeat(64)})).status,409);assert.equal((await state()).dateCount,11);await post('/api/admin',{action:'close-dates'},owner);assert.equal((await state()).phase,'closed');
-await post('/api/admin',{action:'reset',confirm:true},owner);await post('/api/admin',{action:'open-nominations'},owner);
-assert.equal((await post('/api/vote',{venue:'A'},{Cookie:vote.cookie})).status,200);
-const before=(await state()).nominationCount;
-const simultaneous=await Promise.all([post('/api/vote',{venue:'B'}),post('/api/vote',{venue:'C'})]);
-assert.equal(simultaneous.filter(r=>r.status===200).length,1);assert.equal(simultaneous.filter(r=>r.status===409).length,1);assert.equal((await state()).nominationCount,before+1);
-await post('/api/admin',{action:'reset',confirm:true},owner);await post('/api/admin',{action:'open-nominations'},owner);
-const token='a'.repeat(64);
-assert.equal((await post('/api/vote',{venue:'Guest venue',voterToken:token})).status,200);
-assert.equal((await post('/api/vote',{venue:'Other venue',voterToken:token})).status,409);
-assert.equal((await post('/api/vote',{venue:'Owner venue',voterToken:'b'.repeat(64)},owner)).status,200);
-assert.equal((await post('/api/vote',{venue:'Different owner venue',voterToken:'c'.repeat(64)},owner)).status,409);
-assert.equal((await state()).nominationCount,2);
-await post('/api/admin',{action:'reset',confirm:true},owner);await post('/api/admin',{action:'open-nominations'},owner);
-assert.equal((await post('/api/vote',{venue:'Owner venue',voterToken:'b'.repeat(64)},owner)).status,200);
-console.log('Online checks passed: guest/owner access, durable SQLite storage, complete demo flow, resets, cookies, concurrent vote protection, and frontend syntax.');
+for(const action of ['set-participants','set-venues','reset'])assert.equal((await post('/api/admin',{action,participantCount:15,venues:['X','Y'],confirm:true})).status,403);
+const page=await worker.fetch(new Request(origin+'/'),env);const html=await page.text();new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);assert.ok(html.includes('/signin-with-chatgpt'));
+await verifyFlow({state,post});
+await post('/api/admin',{action:'reset',confirm:true},true);
+await post('/api/admin',{action:'set-venues',venues:['X','Y'],participantCount:12},true);
+await post('/api/attendance',{answer:'yes',voterToken:'a'.repeat(64)},true);
+assert.equal((await post('/api/vote',{choices:[0],voterToken:'a'.repeat(64)},true)).status,200);
+assert.equal((await post('/api/vote',{choices:[1],voterToken:'b'.repeat(64)},true)).status,409);
+await post('/api/attendance',{answer:'yes',voterToken:'c'.repeat(64)});await post('/api/attendance',{answer:'yes',voterToken:'d'.repeat(64)});
+const simultaneous=await Promise.all([post('/api/vote',{choices:[0],voterToken:'c'.repeat(64)}),post('/api/vote',{choices:[1],voterToken:'d'.repeat(64)})]);
+assert.equal(simultaneous.filter(r=>r.status===200).length,1);assert.equal(simultaneous.filter(r=>r.status===409).length,1);
+const row=sql.prepare('SELECT state FROM polls WHERE id=1').get(),legacy=JSON.parse(row.state);delete legacy.participantCount;
+sql.prepare('UPDATE polls SET state=? WHERE id=1').run(JSON.stringify(legacy));
+assert.equal((await state()).participantCount,12);assert.equal((await state()).venueCount,2);
+console.log('Online checks passed: permissions, concurrent writes, legacy data, identity checks and frontend syntax.');

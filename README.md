@@ -1,102 +1,40 @@
 # Cardiff Christmas meal vote
 
+Anonymous venue and date voting, with a manual venue list and an editable participant count (12 by default).
 
+## Organiser flow
 
-A local, three-round anonymous poll. No external services, packages, names or email addresses. Requires Node.js 20 or later.
+1. Sign in using **Organiser sign-in** on the live site, or open localhost on your laptop.
+2. For a fresh poll, enter the venue suggestions collected by email, one per line. Enter 2 to 20 distinct venues. All entries appear in the venue vote; staff no longer need to nominate on the website.
+3. Set **Expected participants**, initially 12, and open the venue vote. You can change this number at any time in Organiser controls as the group changes (1 to 100). It cannot be lower than the attendance replies already received, or the votes plus declines in the current round.
+4. Close venue voting when ready. A tie requires another vote between the tied leaders; each runoff starts with a fresh response count.
+5. Contact the winning venue and check dates against the work rota. Enter three available dates and open the date vote. Choose all dates people can attend, or a single favourite date. Date runoffs always accept one choice per person.
+6. Close date voting. A unique winning date produces a large announcement for guests; tied dates require another runoff.
 
+Before voting, each visitor chooses **I will be attending** or **I won't be attending**. Only confirmed attendees may vote; the backend enforces this for venue and date rounds and every runoff. The participant field is the number invited, initially 12. Declines are subtracted from the voting target; attending, declined and awaiting-reply totals are visible to everyone. Attendance can be changed before voting; after voting, changing to not attending is blocked to preserve the existing ballots. Reset clears attendance too. No names or email addresses are required.
 
-
-## Run
-
-
-
-Open this folder in a terminal and run `npm start` (or `node server.mjs`). Open http://localhost:3000 on the organiser’s laptop.
-
-
-
-1. Open nominations. Each colleague suggests one favourite Cardiff venue anonymously. Existing suggestions appear as typing hints. Differences in case, spacing and punctuation are combined; different spellings or aliases are not automatically combined.
-
-2. Close nominations. The top five venues are selected for the shortlist vote. If there is a tie at the cutoff, the organiser chooses between tied venues; venues with higher totals must be included. If fewer than five distinct venues were suggested, all go through. Open the shortlist vote; each colleague chooses one venue.
-
-3. Close the venue vote. Only the highest voted venue can be selected, or one of the tied winners. Contact that venue and check three available dates against the work rota. Enter those dates and open the final vote. Choose either all dates a colleague can attend (the default) or one favourite date. Close the date vote to reveal totals.
-
-
-
-Closing a round is final. Ties are decided by the organiser; results do not claim a booking has been made. Colleagues should refresh the page when a new round opens.
-
-
-
-On this laptop, the bundled Node executable can also run the server:
-
-
-
-```powershell
-
-& 'C:\Users\steve\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' .\server.mjs
-
-```
-
-
-
-## Share locally
-
-
-
-The server prints a same-network voting address. Colleagues connected to the same network can open that address while the laptop and server remain running, subject to firewall and network access rules. Organiser controls require localhost on your laptop. Colleagues elsewhere cannot access this local address. Do not forward a router port for this prototype.
-
-
-
-## Privacy and vote limits
-
-
-
-The application does not collect names, email addresses or store IP addresses, and contains no analytics or external assets. Votes and hashed, random browser receipts are stored locally in `data/poll.json`. Separate cookies are used for each round. The cookie discourages repeated voting in the same browser; private windows, cleared cookies and different devices can bypass this. It is an anonymous informal poll, not a verified one-person-one-vote system. Availability mode allows each person to select several dates, so percentages need not add to 100%.
-
-
-
-## Storage and future hosting
-
-
-
-Votes survive server restarts. Back up the data folder privately; it is excluded from Git. Closing each round is final. For a new poll, stop the server and move the data folder to a private backup before restarting.
-
-
-
-You can later store this project in a GitHub repository. GitHub Pages serves static pages and cannot run this server or store shared votes: an online version will need a hosted backend and organiser authentication. This version is intended for local laptop use.
-
-
-
-## Participation count
-
-
-
-Each round shows the number of responses out of 11 and automatically refreshes that total every 10 seconds without clearing form entries. A response selecting several dates counts as one person, not several votes. At 11 responses it displays a completion message; the organiser still closes the round manually. The count measures submitted responses, not verified identities. More than 11 responses is shown explicitly rather than hidden.
-
-
+The public count and progress bar update every 10 seconds. Venue and date choice totals stay hidden until each round closes. No names or email addresses are collected with votes.
 
 ## Reset and demo
 
+**Reset poll** clears venues, dates and responses after confirmation, keeping the selected participant count. Everyone can vote again. **Load sample responses** replaces the poll with fictional venues and up to 10 sample responses per round, always leaving room for at least one manual response. Reset before inviting real participants.
 
+Existing saved votes are preserved when the software is updated. Older polls without a saved participant count use the new default of 12. Existing nomination rounds remain readable for compatibility; use the manual venue setup if venue voting has not started, or reset when ready for a fresh poll.
 
-Organiser controls include **Reset poll**, which clears all rounds after confirmation and lets the same browsers vote again. **Load 10 sample responses** replaces the poll with a clearly labelled demo. It opens nominations with ten fictional responses across six fictional venues, leaving you to add the eleventh. When you open each later round it also contains ten sample votes; add your own eleventh vote and close the round. Reset before inviting real colleagues; sample responses are not carried into the real poll.
+## Repeat votes and limits
 
+Every round and runoff enforces the configured participant count as its response limit. A random browser receipt, held in local storage and also in a cookie, blocks repeat voting in the same browser. Signed-in accounts are also checked using a salted hash of their user ID. Anonymous people can still use a different browser/device; this is an informal anonymous poll rather than a verified identity election. The overall response limit still applies. Multiple date selections count as one response.
 
+## Local use
 
-## Tied venue and date votes
+Requires Node.js 20 or later. Run `npm start` (or `node server.mjs`), then open http://localhost:3000. The organiser controls are restricted to localhost. A same-network address is printed for colleagues on your network while the laptop is running. Votes survive restarts in `data/poll.json`; keep private backups and never upload this folder to GitHub.
 
+## Online use
 
+The online version uses Sites hosting and a D1 database. Guests vote anonymously using the public URL. The organiser signs in with ChatGPT; the configured ADMIN_EMAIL is checked on every organiser action and kept in hosting settings. Browser receipts contain no names or emails. Concurrent database updates cannot overwrite another response.
 
-When a venue or date round closes, tied highest-scoring choices are highlighted. The organiser must open a runoff between those choices. Everyone votes again, choosing exactly one option, with a fresh participation count for that runoff. Further ties require another runoff; date voting cannot start until the venue has a single winner. The nomination shortlist cutoff still uses the existing organiser selection rule. Demo runoffs contain ten sample votes.
+GitHub holds the same source. GitHub Pages alone cannot run this backend. `npm run build` builds the hosted Worker; `npm run db:generate` generates database migrations, applied by Sites during publication. Existing migration files must not be rewritten after publication.
 
+## Checks
 
-If two or more venues tie for the highest nomination total, only those tied leaders enter the venue vote. Lower-ranked nominations are excluded. Otherwise the normal top-five shortlist applies.
-
-## Online hosting
-
-The online version uses Sites hosting with a D1 database. The guest page is public and anonymous; use **Organiser sign-in** to sign in with the ChatGPT account matching the configured organiser email. Every organiser API action is checked on the server. Reset and sample-vote controls are unchanged. Online polls start empty; local saved votes are never uploaded.
-
-Build the online version with `npm run build`. `node verify-online.mjs` checks the generated Worker against a real SQLite database, including concurrent submissions. Database migrations are generated with `npm run db:generate` and applied by Sites during publishing. ADMIN_EMAIL is stored as a private hosting setting, never in the browser or GitHub. GitHub contains the same source; GitHub Pages alone cannot host the vote backend.
-
-## Repeat vote protection
-
-Each round and runoff accepts at most 11 responses, enforced in the database update path. A random browser receipt is saved locally and sent with submissions, so repeat protection does not rely only on cookie forwarding. Signed-in accounts are also checked using a salted hash of their user ID. Names and emails are not stored with ballots. Anonymous users using different browsers/devices can still bypass per-browser identification; the hard 11-response cap still applies. Resetting changes the poll salt and ID and allows everyone to vote again.
+`npm test` checks the local server using a temporary isolated poll. `npm run test:online` checks the built Worker against a real SQLite database. Both cover manual venues, changing participant counts, response limits, repeats, tie runoffs, resets and sample votes. The online checks also cover organiser access, concurrent writes, and legacy data.
