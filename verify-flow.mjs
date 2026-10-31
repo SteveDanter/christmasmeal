@@ -59,5 +59,22 @@ export async function verifyFlow({state,post}){
  await post('/api/attendance',{answer:'yes',voterToken:yesToken});await post('/api/vote',{choices:[0,0,0],voterToken:yesToken});
  assert.equal((await post('/api/attendance',{answer:'no',voterToken:yesToken})).status,409);
  await admin({action:'reset',confirm:true});assert.equal((await state()).attendanceCount,0);
+ await admin({action:'set-venues',venues:['Venue A','Venue B'],participantCount:2});
+ const first='a'.repeat(64),second='b'.repeat(64);
+ for(const voterToken of [first,second]){await post('/api/attendance',{answer:'yes',voterToken});assert.equal((await post('/api/vote',{choices:[0,0,0],voterToken})).status,200);}
+ await admin({action:'close-venue'});assert.deepEqual((await state()).venueTotals,[6,0]);
+ assert.equal((await post('/api/attendance',{answer:'no',voterToken:first})).status,200);
+ assert.deepEqual((await state()).venueTotals,[6,0]);assert.equal((await state()).votingTarget,1);
+ await admin({action:'open-dates',selected:0,dates,mode:'all'});
+ assert.equal((await post('/api/vote',{choices:[0],voterToken:first})).status,403);
+ assert.equal((await post('/api/vote',{choices:[0],voterToken:second})).status,200);
+ assert.equal((await state()).dateCount,1);
+ assert.equal((await post('/api/attendance',{answer:'no',voterToken:second})).status,409);
+ assert.equal((await post('/api/attendance',{answer:'yes',voterToken:first})).status,200);
+ assert.equal((await state()).votingTarget,2);
+ assert.equal((await post('/api/vote',{choices:[0],voterToken:first})).status,200);
+ await admin({action:'close-dates'});assert.equal((await state()).phase,'closed');
+ await admin({action:'reset',confirm:true});await admin({action:'set-participants',participantCount:12});
+ console.log('Verified post-venue withdrawal, preserved venue points, date-vote exclusion, updated target and rejoining.');
  console.log('Verified attendance gating and declines; manual venues; 12-to-15 participant changes; lower counts; limits; repeats; venue/date runoffs; resets; and demos.');
 }

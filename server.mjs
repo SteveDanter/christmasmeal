@@ -182,8 +182,10 @@ const server=http.createServer(async(req,res)=>{
  const attendance=(state.attendance??[]).find(v=>v.receiptHash===hash||(userHash&&v.accountHash===userHash));
  if(isAttendance){
  if(!attendance&&(state.attendance?.length??0)>=(state.participantCount??12))return reply(409,{error:'Everyone expected has replied. Please ask the organiser to update the participant count.'});
- const hasVoted=Object.values(state.seen).some(list=>list.includes(hash)||(userHash&&list.includes(userHash)));
- if(body.answer==='no'&&hasVoted)return reply(409,{error:'You have already voted in this poll. Please contact the organiser before changing your attendance.'});
+ const dateStage=['date','date-tied','closed'].includes(state.phase)||(state.phase==='venue-closed'&&leaders('venue').length===1);
+ const protectedLists=dateStage?[state.seen.date]:Object.values(state.seen);
+ const hasVoted=protectedLists.some(list=>list.includes(hash)||(userHash&&list.includes(userHash)));
+ if(body.answer==='no'&&hasVoted)return reply(409,{error:dateStage?'You have already voted in this date round. Please contact the organiser before changing your attendance.':'You have already voted in this round. You can reconsider attendance once the winning venue is chosen.'});
  next.attendance??=[];
  const record=next.attendance.find(v=>v.receiptHash===hash||(userHash&&v.accountHash===userHash));
  if(record)record.answer=body.answer;else next.attendance.push({receiptHash:hash,accountHash:userHash,answer:body.answer});
